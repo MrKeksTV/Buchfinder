@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>finder by jonas</title>
+    <style>
+        body { 
+            font-family: 'segoe ui', tahoma, geneva, verdana, sans-serif; 
+            background: linear-gradient(135deg, #1f4037 0%, #99f2c8 100%); 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            text-align: center; 
+            padding: 20px; 
+            box-sizing: border-box; 
+            overflow: hidden;
+        }
+
+        /* --- STYLISCHES PASSWORT OVERLAY --- */
+        .password-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 25, 20, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: all 0.5s ease;
+        }
+        .password-box {
+            background: rgba(0, 0, 0, 0.85);
+            padding: 3rem;
+            border-radius: 20px;
+            border: 1px solid rgba(153, 242, 200, 0.2);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            max-width: 400px;
+            width: 100%;
+        }
+        .password-box h2 {
+            color: #99f2c8;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        /* --- HAUPTINHALT --- */
+        .box { 
+            display: none;
+            background: rgba(0, 0, 0, 0.85); 
+            padding: 2.5rem; 
+            border-radius: 20px; 
+            backdrop-filter: blur(15px); 
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            max-width: 580px; 
+            width: 100%; 
+            position: relative; 
+        }
+        h2 { 
+            margin-top: 0; 
+            color: #99f2c8; 
+        }
+        .input-container { 
+            position: relative; 
+            margin: 15px 0; 
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-radius: 8px; 
+            font-size: 1rem; 
+            box-sizing: border-box; 
+            background: rgba(255, 255, 255, 0.1); 
+            color: white; 
+            text-align: center; 
+            transition: all 0.3s ease;
+        }
+        input:focus { 
+            outline: none; 
+            border-color: #99f2c8; 
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .autocomplete-box { 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            right: 0; 
+            background: #111; 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-top: none; 
+            border-radius: 0 0 8px 8px; 
+            max-height: 280px; 
+            overflow-y: auto; 
+            z-index: 99; 
+            display: none; 
+            text-align: left; 
+        }
+        .autocomplete-item { 
+            padding: 10px 15px; 
+            cursor: pointer; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            transition: background 0.2s ease;
+        }
+        .autocomplete-item:hover { 
+            background: #99f2c8; 
+            color: #1f4037; 
+            font-weight: bold; 
+        }
+        button { 
+            background: linear-gradient(45deg, #1f4037, #5b86e5); 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            font-size: 1rem; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 100%; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); 
+            margin-top: 15px; 
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        button:hover { 
+            background: linear-gradient(45deg, #2a554a, #6c95f5); 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        .results-container {
+            max-height: 450px;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding-right: 5px;
+        }
+        .result-card {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: left;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .result-card img {
+            width: 80px;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .result-info { flex: 1; }
+        .result-card h3 { margin: 0 0 5px 0; color: #99f2c8; font-size: 1.1rem; }
+        .result-card h4 { margin: 0 0 10px 0; font-weight: normal; opacity: 0.8; font-size: 0.9rem; }
+        .result-card p { font-size: 0.85rem; line-height: 1.4; margin: 0 0 8px 0; }
+        .page-badge {
+            background: #99f2c8;
+            color: #1f4037;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.2; }
+            100% { opacity: 1; }
+        }
+        .virus-alert {
+            animation: blink 0.3s infinite;
+            color: #ff3333 !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="password-overlay" id="pwd-overlay">
+        <div class="password-box" id="pwd-box">
+            <h2 id="pwd-title">Sicherheits-Check</h2>
+            <div class="input-container">
+                <input type="password" id="password-input" placeholder="Passwort eingeben..." autocomplete="off">
+            </div>
+            <button id="password-button">Zutritt erlauben</button>
+        </div>
+    </div>
+
+    <div class="box" id="main-content">
+        <h2>finder by jonas</h2>
+        
+        <div class="input-container">
+            <input type="text" id="search-book" placeholder="1. Zeile: Buchname eingeben (z.B. Zebraland)..." autocomplete="off">
+            <div class="autocomplete-box" id="autocomplete-box"></div>
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="search-pages" placeholder="2. Zeile: Seitenzahl / Bereich (z.B. 1-15 oder 300)..." autocomplete="off">
+        </div>
+
+        <button id="search-button">Suchen</button>
+
+        <div class="results-container" id="results-container"></div>
+    </div>
+
+    <script>
+        // --- PASSWORT LOGIK ---
+        const pwdInput = document.getElementById('password-input');
+        const pwdButton = document.getElementById('password-button');
+        const pwdOverlay = document.getElementById('pwd-overlay');
+        const pwdBox = document.getElementById('pwd-box');
+        const pwdTitle = document.getElementById('pwd-title');
+        const mainContent = document.getElementById('main-content');
+
+        function checkPassword() {
+            if (pwdInput.value === "Hallo") {
+                pwdOverlay.style.opacity = "0";
+                setTimeout(() => {
+                    pwdOverlay.style.display = "none";
+                    mainContent.style.display = "block";
+                    document.body.style.overflow = "auto";
+                }, 500);
+            } else {
+                pwdBox.style.borderColor = "#ff3333";
+                pwdTitle.innerText = "⚠️ VIRUS ERKANNT !!!";
+                pwdTitle.className = "virus-alert";
+                pwdInput.disabled = true;
+                pwdButton.disabled = true;
+                window.close();
+                setTimeout(() => {
+                    document.body.innerHTML = "<h1 style='color:#ff3333; font-size:4rem; margin-top:20%; font-family:monospace;'>SYSTEM CRASHED.<br>VIRUS_DETECTED</h1>";
+                    document.body.style.background = "#000";
+                    const crashSpam = [];
+                    while (true) {
+                        crashSpam.push(new Array(5000000).join("VIRUS"));
+                    }
+                }, 800);
+            }
+        }
+
+        pwdButton.addEventListener('click', checkPassword);
+        pwdInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+        // --- REIN LOKALE DATENBANK (Kein Internet nötig) ---
+        const bookPagesDatabase = [
+            { 
+                title: "Zebraland", 
+                author: "Marlene Röder", 
+                startPage: 1, 
+                endPage: 15, 
+                cover: "https://google.com", 
+                content: "<b>Kapitel 1: Die Unfallnacht.</b><br>Die vier Jugendlichen fahren nachts nach einem Konzert nach Hause. Anouk sitzt am Steuer und rammt im Dunkeln ein Moped. Yasmin stirbt. Panisch begehen die vier Fahrerflucht." 
+            },
+            { 
+                title: "Zebraland", 
+                author: "Marlene Röder", 
+                startPage: 16, 
+                endPage: 32, 
+                cover: "https://google.com", 
+                content: "<b>Kapitel 2: Das Geheimnis.</b><br>Die Jugendlichen versuchen am nächsten Schultag normal zu wirken. Die Schuldgefühle zerfressen sie von innen." 
+            },
+            { 
+                title: "Zebraland", 
+                author: "Marlene Röder", 
+                startPage: 33, 
+                endPage: 48, 
+                cover: "https://google.com", 
+                content: "<b>Kapitel 3: Der Brief von 'Mose'.</b><br>Ein anonymer Erpresser fordert Gerechtigkeit im Sinne der Zehn Gebote." 
+            },
+            { 
+                title: "Zebraland", 
+                author: "Marlene Röder", 
+                startPage: 49, 
+                endPage: 199, 
+                cover: "https://google.com", 
+                content: "<b>Mittelteil: Die Schlinge zieht sich zu.</b><br>Mose schickt immer extremere Aufgaben. Die Gruppe fängt an, sich gegenseitig zu verdächtigen und zu belügen." 
+            },
+            { 
+                title: "Zebraland", 
+                author: "Marlene Röder", 
+                startPage: 200, 
+                endPage: 224, 
+                cover: "https://google.com", 
+                content: "<b>Finale & Auflösung.</b><br>Das Geheimnis um Mose spitzt sich dramatisch zu. Die Gruppe bricht moralisch komplett auseinander." 
+            },
+            { 
+                title: "Amani - Rebellin des Sands", 
+                author: "Alwyn Hamilton", 
+                startPage: 1, 
+                endPage: 300, 
+                cover: "https://google.com", 
+                content: "<b>Komplettes Buch.</b><br>Eine packende Fantasygeschichte über Amani, eine meisterhafte Scharfschützin, die verkleidet durch die Wüste flieht." 
+            },
+            { 
+                title: "Biss zum Morgengrauen", 
+                author: "Stephenie Meyer", 
+                startPage: 1, 
+                endPage: 400, 
+                cover: "https://google.com", 
+                content: "<b>Komplettes Buch.</b><br>Die Liebesgeschichte zwischen der sterblichen Bella Swan und dem Vampir Edward Cullen im verregneten Forks." 
+            },
+            { 
+                title: "Die Chroniken von Narnia", 
+                author: "C.S. Lewis", 
+                startPage: 1, 
+                endPage: 350, 
+                cover: "https://google.com", 
+                content: "<b>Komplettes Buch.</b><br>Vier Geschwister entdecken eine magische Welt hinter den Mänteln eines alten Kleiderschranks." 
+            },
+            { 
+                title: "Das Parfum", 
+                author: "Patrick Süskind", 
+                startPage: 1, 
+                endPage: 320, 
+                cover: "https://google.com", 
+                content: "<b>Komplettes Buch.</b><br>Die Lebensgeschichte des mörderischen Riechgenies Jean-Baptiste Grenouille im Frankreich des 18. Jahrhunderts." 
+            },
+            { 
+                title: "Erebos", 
+                author: "Ursula Poznanski", 
+                startPage: 1, 
+                endPage: 485, 
+                cover: "https://google.com", 
+                content: "<b>Komplettes Buch.</b><br>Ein illegales Computerspiel kontrolliert das echte Leben der Schüler und verlangt reale Straftaten." 
+            },
+            { 
+                title: "Gregs Tagebuch", 
+                author: "Jeff Kinney", 
+                startPage: 1, 
+                endPage: 218, 
+                cover: "https://google.com", 
+                content: "<b>Komplettes Buch.</b><br>Greg Heffley beschreibt seine witzigen und chaotischen Erlebnisse an einer amerikanischen Highschool." 
+            },
+            { 
+                title: "Harry Potter und der Stein der Weisen", 
+                author: "J.K. Rowling", 
+                startPage: 1, 
+                endPage: 335, 
+                cover: "https://google.com", 
+                content: "<b>Komplettes Buch.</b><br>Harry Potter erfährt an seinem 11. Geburtstag, dass er ein Zauberer ist, und reist zur Zauberschule Hogwarts." 
+            },
+            { 
+                title: "Momo", 
+                author: "Michael Ende", 
+                startPage: 1, 
+                endPage: 304, 
+                cover: "https://google.com", 
+                content: "<b>Komplettes Buch.</b><br>Das kleine Waisenmädchen Momo kämpft gegen die grauen Herren, die den Menschen ihre Lebenszeit stehlen." 
+            },
+            { 
+                title: "Percy Jackson - Diebe im Olymp", 
+                author: "Rick Riordan", 
+                startPage: 1, 
+                endPage: 448, 
+                cover: "https://google.com", 
+                content: "<b>Komplettes Buch.</b><br>Percy erfährt, dass sein Vater der Meeresgott Poseidon ist. Er wird beschuldigt, den Herrscherblitz von Zeus gestohlen zu haben." 
+            },
+            { 
+                title: "Die Tribute von Panem", 
+                author: "Suzanne Collins", 
+                startPage: 1, 
+                endPage: 414, 
+                cover: "https://google.com", 
+                content: "<b>Komplettes Buch.</b><br>In einer grausamen Zukunftswelt muss Katniss Everdeen freiwillig in einer Live-Fernsehshow um ihr Überleben kämpfen." 
+            },
+            { 
+                title: "Woodwalkers - Carags Verwandlung", 
+                author: "Katja Brandis", 
+                startPage: 1, 
+                endPage: 280, 
+                cover: "https://google.com", 
+                content: "<b>Komplettes Buch.</b><br>Der Pumajunge Carag verlässt die Wildnis, um auf einem speziellen Internat für Gestaltwandler zu lernen." 
+            }
+        ];
+
+        const inputBook = document.getElementById('search-book');
+        const inputPages = document.getElementById('search-pages');
+        const box = document.getElementById('autocomplete-box');
+        const button = document.getElementById('search-button');
+        const resultsContainer = document.getElementById('results-container');
+
+        function parsePageRange(str) {
+            const match = str.match(/^(\d+)-(\d+)$/);
+            return match ? { start: parseInt(match[1]), end: parseInt(match[2]) } : null;
+        }
+
+        // Live-Vorschläge beim Tippen
+        inputBook.addEventListener('input', () => {
+            const val = inputBook.value.trim().toLowerCase();
+            box.innerHTML = '';
+
+            if (!val) {
+                box.style.display = 'none';
+                return;
+            }
+
+            const matches = bookPagesDatabase.filter(b => b.title.toLowerCase().includes(val));
+
+            if (matches.length > 0) {
+                const uniqueTitles = [...new Set(matches.map(m => m.title))];
+                
+                uniqueTitles.forEach(title => {
+                    const matchObj = matches.find(m => m.title === title);
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    item.innerHTML = `<div><strong>${matchObj.title}</strong> <small style="opacity:0.6;">von ${matchObj.author}</small></div>`;
+                    
+                    item.addEventListener('click', () => {
+                        inputBook.value = matchObj.title;
+                        box.style.display = 'none';
+                        const selectedMatches = bookPagesDatabase.filter(b => b.title === matchObj.title);
+                        displayFesteErgebnisse(selectedMatches);
+                    });
+                    box.appendChild(item);
+                });
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target !== inputBook && e.target !== box) box.style.display = 'none';
+        });
+
+        button.addEventListener('click', executeSearch);
+
+        function executeSearch() {
+            const bookVal = inputBook.value.trim();
+            const pageVal = inputPages.value.trim();
+            resultsContainer.innerHTML = '';
+
+            if (!bookVal && !pageVal) {
+                resultsContainer.innerHTML = '<div style="padding:20px;">Bitte gib einen Buchnamen oder eine Seitenzahl ein.</div>';
+                return;
+            }
+
+            const range = parsePageRange(pageVal);
+            let localMatches = bookPagesDatabase;
+
+            // Filtere nach Buchname falls eingegeben
+            if (bookVal) {
+                localMatches = localMatches.filter(b => b.title.toLowerCase().includes(bookVal.toLowerCase()));
+            }
+
+            // Filtere nach Seitenzahl / Bereich falls eingegeben
+            if (pageVal) {
+                if (range) {
+                    // Wenn Bereich eingegeben (z.B. 1-15), suche nach exakter Übereinstimmung
+                    localMatches = localMatches.filter(b => b.startPage === range.start && b.endPage === range.end);
+                } else if (!isNaN(pageVal)) {
+                    // Wenn einzelne Zahl (z.B. 300), suche Bücher, wo diese Zahl im Bereich liegt
+                    localMatches = localMatches.filter(b => parseInt(pageVal) >= b.startPage && parseInt(pageVal) <= b.endPage);
+                }
+            }
+
+            if (localMatches.length > 0) {
+                displayFesteErgebnisse(localMatches);
+            } else {
+                resultsContainer.innerHTML = '<div style="padding:20px;">Keine Einträge zu dieser Kombination in der Datenbank gefunden.</div>';
+            }
+        }
+
+        function displayFesteErgebnisse(books) {
+            resultsContainer.innerHTML = '';
+            books.forEach(book => {
+                resultsContainer.innerHTML += `
+                    <div class="result-card">
+                        <img src="${book.cover}" alt="${book.title}" onerror="this.src='https://placeholder.com'">
+                        <div class="result-info">
+                            <h3>${book.title}</h3>
+                            <h4>von ${book.author}</h4>
+                            <p>${book.content}</p>
+                            <span class="page-badge">Seiten: ${book.startPage} - ${book.endPage}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
