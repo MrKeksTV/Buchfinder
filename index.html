@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>finder by jonas</title>
+    <style>
+        body { 
+            font-family: 'segoe ui', tahoma, geneva, verdana, sans-serif; 
+            background: linear-gradient(135deg, #1f4037 0%, #99f2c8 100%); 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            text-align: center; 
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+        .box { 
+            background: rgba(0, 0, 0, 0.85); 
+            padding: 2.5rem; 
+            border-radius: 20px; 
+            backdrop-filter: blur(15px); 
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            max-width: 580px; 
+            width: 100%; 
+            position: relative; 
+        }
+        h2 { 
+            margin-top: 0; 
+            color: #99f2c8; 
+        }
+        .input-container { 
+            position: relative; 
+            margin: 10px 0; 
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-radius: 8px; 
+            font-size: 1rem; 
+            box-sizing: border-box; 
+            background: rgba(255, 255, 255, 0.1); 
+            color: white; 
+            text-align: center; 
+            transition: all 0.3s ease;
+        }
+        input:focus { 
+            outline: none; 
+            border-color: #99f2c8; 
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .autocomplete-box { 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            right: 0; 
+            background: #111; 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-top: none; 
+            border-radius: 0 0 8px 8px; 
+            max-height: 280px; 
+            overflow-y: auto; 
+            z-index: 99; 
+            display: none; 
+            text-align: left; 
+        }
+        .autocomplete-item { 
+            padding: 10px 15px; 
+            cursor: pointer; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            transition: background 0.2s ease;
+        }
+        .autocomplete-item:hover { 
+            background: #99f2c8; 
+            color: #1f4037; 
+            font-weight: bold; 
+        }
+        button { 
+            background: linear-gradient(45deg, #1f4037, #5b86e5); 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            font-size: 1rem; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 100%; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); 
+            margin-top: 15px; 
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        button:hover { 
+            background: linear-gradient(45deg, #2a554a, #6c95f5); 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        .result-card {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+            text-align: left;
+        }
+        .result-card h3 { margin: 0 0 5px 0; color: #99f2c8; }
+        .result-card h4 { margin: 0 0 10px 0; font-weight: normal; opacity: 0.8; font-size: 0.9rem; }
+        .result-card p { font-size: 0.9rem; line-height: 1.4; margin: 0; }
+        .page-badge {
+            background: #99f2c8;
+            color: #1f4037;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>finder by jonas</h2>
+        <div class="input-container">
+            <input type="text" id="search-input" placeholder="Buch oder Seitenbereich (z.B. 1-15, 33-48) eingeben..." autocomplete="off">
+            <div class="autocomplete-box" id="autocomplete-box"></div>
+        </div>
+        <button id="search-button">Suchen</button>
+
+        <div class="result-card" id="result-card">
+            <h3 id="res-title">Ergebnis</h3>
+            <h4 id="res-author">Details</h4>
+            <div id="res-desc" style="font-size: 0.9rem; line-height: 1.4;">Inhalt lädt...</div>
+        </div>
+    </div>
+
+    <script>
+        // Erweiterte interne Datenbank inklusive Zebraland Einträgen
+        const bookPagesDatabase = [
+            // --- ZEBRALAND KAPITEL ---
+            { title: "Zebraland", author: "Marlene Röder", startPage: 1, endPage: 15, content: "<b>Kapitel 1: Die Unfallnacht.</b><br>Die vier Jugendlichen (Anouk, Judith, Philipp und Ziggy) fahren nachts nach einem Konzert nach Hause. Anouk sitzt am Steuer und rammt im Dunkeln ein Moped. Yasmin (das Opfer mit dem Zebra-Halstuch) stirbt. Panisch begehen die vier Fahrerflucht." },
+            { title: "Zebraland", author: "Marlene Röder", startPage: 16, endPage: 32, content: "<b>Kapitel 2: Das Geheimnis und die Angst.</b><br>Die Jugendlichen versuchen am nächsten Schultag, so normal wie möglich zu wirken. Die Schuldgefühle zerfressen sie von innen, besonders den sensiblen Ziggy. Judith will zur Polizei gehen, doch Anouk hält sie auf, um ihre Zukunft nicht zu zerstören." },
+            { title: "Zebraland", author: "Marlene Röder", startPage: 33, endPage: 48, content: "<b>Kapitel 3: Der Brief von 'Mose'.</b><br>Ein anonymer Erpresser meldet sich bei der Gruppe unter dem Namen 'Mose'. Er weiß genau, was in der Unfallnacht passiert ist und fordert Gerechtigkeit im Sinne der Zehn Gebote ('Du sollst nicht töten, du sollst nicht lügen'). 'Mose is watching you' wird zur bitteren Realität." },
+            { title: "Zebraland", author: "Marlene Röder", startPage: 200, endPage: 224, content: "<b>Finale & Auflösung.</b><br>Das Geheimnis um die Identität des Erpressers 'Mose' spitzt sich dramatisch zu. Die Gruppe bricht moralisch komplett auseinander, als herauskommt, wer sie aus dem engsten Kreis die ganze Zeit überwacht und manipuliert hat." },
+            
+            // --- ANDERE BÜCHER ---
+            { title: "Harry Potter und der Stein der Weisen", author: "J.K. Rowling", startPage: 33, endPage: 48, content: "<b>Kapitel: Ein Fenster voller Magie.</b><br>Harry erfährt von Hagrid, dass er ein Zauberer ist. Die Dursleys versuchen verzweifelt, die Briefe aus Hogwarts zu verstecken. Hagrid bricht die Tür auf." },
+            { title: "JavaScript für Einsteiger", author: "John Doe", startPage: 33, endPage: 48, content: "<b>Kapitel 3: Funktionen und Scopes.</b><br>Auf diesen Seiten lernst du, wie man 'Arrow Functions' schreibt und was der Unterschied zwischen 'let', 'const' und 'var' ist." }
+        ];
+
+        const input = document.getElementById('search-input');
+        const box = document.getElementById('autocomplete-box');
+        const button = document.getElementById('search-button');
+        
+        const resultCard = document.getElementById('result-card');
+        const resTitle = document.getElementById('res-title');
+        const resAuthor = document.getElementById('res-author');
+        const resDesc = document.getElementById('res-desc');
+
+        // Funktion filtert Seitenbereiche heraus
+        function parsePageRange(str) {
+            const match = str.match(/^(\d+)-(\d+)$/);
+            if (match) {
+                return { start: parseInt(match[1]), end: parseInt(match[2]) };
+            }
+            return null;
+        }
+
+        input.addEventListener('input', () => {
+            const val = input.value.trim().toLowerCase();
+            box.innerHTML = '';
+
+            if (!val) {
+                box.style.display = 'none';
+                return;
+            }
+
+            const range = parsePageRange(val);
+            let matches = [];
+
+            if (range) {
+                // Findet Einträge, bei denen der gesuchte Bereich in den Buch-Bereich fällt
+                matches = bookPagesDatabase.filter(b => range.start >= b.startPage && range.end <= b.endPage);
+            } else {
+                matches = bookPagesDatabase.filter(b => b.title.toLowerCase().includes(val) || b.author.toLowerCase().includes(val));
+            }
+
+            if (matches.length > 0) {
+                matches.forEach(book => {
+                    const div = document.createElement('div');
+                    div.className = 'autocomplete-item';
+                    div.innerHTML = `
+                        <div>
+                            <strong>${book.title}</strong><br>
+                            <small style="opacity:0.7">${book.author}</small>
+                        </div>
+                        <span class="page-badge">S. ${book.startPage}-${book.endPage}</span>
+                    `;
+                    
+                    div.addEventListener('click', () => {
+                        input.value = range ? `${range.start}-${range.end}` : book.title;
+                        box.style.display = 'none';
+                        showDetails(book);
+                    });
+                    
+                    box.appendChild(div);
+                });
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        });
+
+        function showDetails(book) {
+            resTitle.innerText = book.title;
+            resAuthor.innerText = `Von: ${book.author} | Bereich: Seite ${book.startPage} bis ${book.endPage}`;
+            resDesc.innerHTML = book.content;
+            resultCard.style.display = 'block';
+        }
+
+        function triggerSearch() {
+            const val = input.value.trim();
+            const range = parsePageRange(val);
+            box.style.display = 'none';
+
+            let match;
+            if (range) {
+                match = bookPagesDatabase.find(b => range.start >= b.startPage && range.end <= b.endPage);
+            } else {
+                match = bookPagesDatabase.find(b => b.title.toLowerCase().includes(val.toLowerCase()));
+            }
+
+            if (match) {
+                showDetails(match);
+            } else {
+                resTitle.innerText = "Kein Eintrag gefunden";
+                resAuthor.innerText = "";
+                resDesc.innerHTML = "Für diesen Suchbegriff oder Seitenbereich sind keine Daten hinterlegt. Versuche es z.B. mit <b>1-15</b> oder tippe <b>Zebraland</b> ein.";
+                resultCard.style.display = 'block';
+            }
+        }
+
+        button.addEventListener('click', triggerSearch);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') triggerSearch(); });
+        document.addEventListener('click', (e) => { if (e.target !== input && e.target !== box) box.style.display = 'none'; });
+    </script>
+
+</body>
+</html>
