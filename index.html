@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zebraland Analysator</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f5f5f7; color: #1d1d1f; }
+        h1 { text-align: center; }
+        .box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-top: 10px; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; background-color: #0071e3; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button:hover { background-color: #0077ed; }
+        #output { background: white; padding: 20px; border-radius: 12px; white-space: pre-wrap; display: none; border: 1px solid #e5e5e7; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .loading { text-align: center; color: #86868b; display: none; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <h1>Zebraland Helfer 🦓</h1>
+
+    <div class="box">
+        <label for="apiKey">1. Gemini API-Schlüssel:</label>
+        <input type="password" id="apiKey" placeholder="Hier deinen API-Key einfügen...">
+        <p style="font-size: 12px; color: #86868b; margin-top: -10px;">Hole dir einen kostenlosen Key bei Google AI Studio.</p>
+
+        <label for="pages">2. Seitenzahlen eingeben:</label>
+        <input type="text" id="pages" placeholder="z.B. 22-33, 6 oder alle Seiten">
+
+        <button onclick="startAnalysis()">Analyse starten</button>
+    </div>
+
+    <div id="loading" class="loading">Kompiliere Daten aus Zebraland... Bitte warten...</div>
+    <div id="output"></div>
+
+    <!-- Importiere das Google GenAI SDK über das Web -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/genai": "https://esm.run"
+        }
+      }
+    </script>
+
+    <script type="module">
+        import { GoogleGenAI } from '@google/genai';
+
+        window.startAnalysis = async function() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const pages = document.getElementById('pages').value.trim();
+            const outputDiv = document.getElementById('output');
+            const loadingDiv = document.getElementById('loading');
+
+            if (!apiKey) { alert('Bitte gib deinen Gemini API-Schlüssel ein!'); return; }
+            if (!pages) { alert('Bitte gib die Seitenzahlen ein!'); return; }
+
+            outputDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+
+            try {
+                // Initialisiere den Google GenAI Client
+                const ai = new GoogleGenAI({ apiKey: apiKey });
+                
+                const prompt = `Du bist ein Experte für das Jugendbuch 'Zebraland' von Michael Stavarič. Der Nutzer bereitet eine Präsentation für den Deutschunterricht vor. Bitte liefere eine detaillierte Zusammenfassung und Analyse für folgende Seiten: ${pages}. Beziehe dich exakt auf den Inhalt dieser Seiten im Buch 'Zebraland'. Strukturierte deine Antwort zwingend mit folgenden Punkten: 1. Wichtige Handlungsereignisse auf diesen Seiten. 2. Auftretende Charaktere und deren Entwicklung/Verhalten. 3. Zentrale Motive, Symbole oder Themen, die hier wichtig sind. 4. Relevante Zitate oder Kernmomente (falls zutreffend).`;
+
+                // Nutze das aktuelle gemini-2.5-flash Modell
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: prompt,
+                });
+
+                outputDiv.textContent = response.text;
+                outputDiv.style.display = 'block';
+            } catch (error) {
+                alert('Fehler: ' + error.message);
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
