@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zebraland Deutsch-Helfer</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; background-color: #f5f5f7; color: #1d1d1f; }
+        h1 { text-align: center; font-size: 24px; }
+        .box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 8px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .btn-blue { background-color: #0071e3; color: white; }
+        .btn-green { background-color: #34c759; color: white; display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>Zebraland Helfer 🦓</h1>
+
+    <div class="box">
+        <label for="pages">Seitenzahlen eingeben:</label>
+        <input type="text" id="pages" placeholder="z.B. 22-33, 6 oder alle Seiten">
+
+        <button class="btn-blue" onclick="generatePrompt()">Text für Gemini erstellen</button>
+        <button id="copyBtn" class="btn-green" onclick="copyAndOpen()">Kopieren & Gemini öffnen</button>
+    </div>
+
+    <script>
+        let generatedText = "";
+
+        function generatePrompt() {
+            const pages = document.getElementById('pages').value.trim();
+            if (!pages) { alert('Bitte gib zuerst die gewünschten Seiten ein!'); return; }
+
+            // Erstellt den fertigen Text für die KI
+            generatedText = `Du bist ein Experte für das Jugendbuch 'Zebraland' von Michael Stavarič. Ich bereite eine Präsentation für den Deutschunterricht vor. Bitte liefere eine detaillierte Zusammenfassung und Analyse für folgende Seiten: ${pages}.\n\nBeziehe dich exakt auf den Inhalt dieser Seiten im Buch 'Zebraland'. Strukturierte deine Antwort mit folgenden Punkten:\n1. Wichtige Handlungsereignisse auf diesen Seiten.\n2. Auftretende Charaktere und deren Entwicklung/Verhalten.\n3. Zentrale Motive, Symbole oder Themen.\n4. Relevante Zitate oder Kernmomente.`;
+
+            // Zeigt den grünen Kopier-Button an
+            document.getElementById('copyBtn').style.display = 'block';
+            document.getElementById('copyBtn').textContent = "Text kopieren & Gemini öffnen";
+        }
+
+        function copyAndOpen() {
+            // Kopiert den Text in die Zwischenablage des iPads
+            navigator.clipboard.writeText(generatedText).then(() => {
+                alert("Text wurde kopiert! Du wirst jetzt zu Gemini weitergeleitet. Füge den Text dort einfach mit 'Einsetzen' ein.");
+                // Öffnet die offizielle kostenlose Gemini Webseite
+                window.open("https://gemini.google.com", "_blank");
+            }).catch(err => {
+                alert("Fehler beim Kopieren: " + err);
+            });
+        }
+    </script>
+</body>
+</html>
