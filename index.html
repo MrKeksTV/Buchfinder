@@ -1,0 +1,146 @@
+const bookData = [
+    {
+        start:1,end:20,
+        title:"Konzertnacht & Unfall",
+        handlung:"Vier Jugendliche verursachen einen tödlichen Unfall und begehen Fahrerflucht.",
+        charaktere:"Anouk, Judith, Philipp, Ziggy",
+        motive:"Schuld, Angst, moralischer Konflikt"
+    },
+    {
+        start:21,end:55,
+        title:"Zebra & Erpresser",
+        handlung:"Nach dem Unfall entsteht massiver psychischer Druck durch einen unbekannten Erpresser.",
+        charaktere:"Ziggy, Philipp, Gruppe",
+        motive:"Kontrolle, Angst, Schuld, Überwachung"
+    }
+];
+
+function ask(){
+
+    let input = document.getElementById("question").value;
+    let chat = document.getElementById("chat");
+
+    if(!input.trim()) return;
+
+    chat.innerHTML += `<div class="message user">🧑 ${input}</div>`;
+
+    let response = generate(input);
+
+    chat.innerHTML += `<div class="message bot">${response}</div>`;
+
+    document.getElementById("question").value = "";
+
+    chat.scrollTop = chat.scrollHeight;
+}
+
+
+// 🧠 INTELLIGENTE KI-LOGIK
+function generate(q){
+
+    let clean = q.toLowerCase().replace(/\s/g,"");
+
+    // 🔥 RANGE SUPPORT (33-48)
+    let ranges = [...clean.matchAll(/(\d+)-(\d+)/g)];
+
+    if(ranges.length > 0){
+
+        let pages = new Set();
+
+        ranges.forEach(r=>{
+            let start = parseInt(r[1]);
+            let end = parseInt(r[2]);
+
+            for(let i=start;i<=end;i++){
+                pages.add(i);
+            }
+        });
+
+        return buildMulti([...pages]);
+    }
+
+    // 🔥 SINGLE PAGE (Seite 40 oder 40)
+    let pageMatch = clean.match(/seite(\d+)|^(\d+)$/);
+
+    if(pageMatch){
+        let page = parseInt(pageMatch[1] || pageMatch[2]);
+        return buildSingle(page);
+    }
+
+    // 👤 CHARAKTERE
+    if(q.toLowerCase().includes("ziggy"))
+        return "🧠 Ziggy ist sensibel und verarbeitet Schuld durch Kunst (Zebra-Symbol).";
+
+    if(q.toLowerCase().includes("anouk"))
+        return "🧠 Anouk ist die Fahrerin des Unfalls und stark traumatisiert.";
+
+    if(q.toLowerCase().includes("philipp"))
+        return "🧠 Philipp versucht Kontrolle zu behalten und die Wahrheit zu verstecken.";
+
+    // 🎯 THEMEN
+    if(q.toLowerCase().includes("thema") || q.toLowerCase().includes("worum"))
+        return "🎯 Themen: Schuld, Angst, Vertuschung, Moral, psychischer Druck, Verantwortung.";
+
+    // 📚 DEFAULT
+    return "❓ Ich habe das nicht verstanden.\nVersuche: '33-48', 'Seite 40' oder 'Wer ist Ziggy?'";
+}
+
+
+// 📄 SINGLE PAGE
+function buildSingle(page){
+
+    for(let c of bookData){
+        if(page >= c.start && page <= c.end){
+
+            return `
+📖 <b>${c.title}</b><br><br>
+
+🧠 <b>Handlung:</b><br>
+${c.handlung}<br><br>
+
+👤 <b>Figuren:</b><br>
+${c.charaktere}<br><br>
+
+🎯 <b>Themen:</b><br>
+${c.motive}<br><br>
+
+💡 <i>Interpretation:</i><br>
+Der Abschnitt zeigt die zunehmende psychische Belastung, Schuld und moralische Zerrissenheit der Figuren.
+            `;
+        }
+    }
+
+    return "❌ Diese Seite ist nicht im Buchmodell enthalten.";
+}
+
+
+// 📚 MULTI PAGE
+function buildMulti(pages){
+
+    let used = new Set();
+    let out = "📚 <b>MEHRSEITIGE ANALYSE</b><br><br>";
+
+    pages.forEach(p=>{
+        for(let c of bookData){
+
+            if(p >= c.start && p <= c.end && !used.has(c.title)){
+
+                out += `
+📖 <b>${c.title}</b><br><br>
+
+🧠 ${c.handlung}<br><br>
+
+👤 ${c.charaktere}<br>
+🎯 ${c.motive}<br><br>
+
+────────────────────<br><br>
+                `;
+
+                used.add(c.title);
+            }
+        }
+    });
+
+    out += "💡 <b>Gesamtinterpretation:</b> Die Handlung zeigt eine Eskalation von Schuld, Angst und psychischem Druck innerhalb der Gruppe.";
+
+    return out;
+}
